@@ -33,7 +33,9 @@ const Checkout = () => {
   const {
     cart,
     totalPrice,
-
+    updateQuantity,
+    removeItem,
+    decreaseQuantity,
     clearCart,
   } = useCart();
   const { user } = useContext(AuthContext);
@@ -184,43 +186,90 @@ const Checkout = () => {
           </Box>
         )}
 
-        <Drawer
-          anchor='right'
-          open={drawerOpen}
-          onClose={handleCloseDrawer}
-          PaperProps={{ sx: { width: 350, p: 2 } }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant='h6'>Keranjang Belanja</Typography>
-            <IconButton onClick={handleCloseDrawer}>
-              <CloseIcon />
+    <Drawer
+      anchor='right'
+      open={drawerOpen}
+      onClose={handleCloseDrawer}
+      PaperProps={{ sx: { width: 350, p: 2 } }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+      <Typography variant='h6'>Keranjang Belanja</Typography>
+      <IconButton onClick={handleCloseDrawer}>
+      <CloseIcon />
+    </IconButton>
+  </Box>
+
+  <Divider sx={{ mb: 2 }} />
+
+  <List>
+    {cart.map((item) => (
+      <ListItem 
+        key={item.id}
+        secondaryAction={
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              onClick={() => decreaseQuantity(item.id)}
+              disabled={item.quantity <= 1}
+              size="small"
+            >
+              <RemoveIcon fontSize="small" />
+            </IconButton>
+            <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
+            <IconButton 
+              onClick={() => {
+                if (item.quantity < item.stock) {
+                  updateQuantity(item.id, item.quantity + 1);
+                }
+              }}
+              disabled={item.quantity >= item.stock}
+              size="small"
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+            <IconButton 
+              onClick={() => removeItem(item.id)}
+              size="small"
+              sx={{ ml: 1 }}
+            >
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </Box>
-          <Divider sx={{ mb: 2 }} />
+        }
+      >
+        <ListItemText
+          primary={item.title}
+          secondary={
+            <>
+              {`${convertToRupiah(item.price.toFixed(2))} × ${item.quantity} = ${convertToRupiah((item.price * item.quantity).toFixed(2))}`}
+              <br />
+              {item.quantity >= item.stock && (
+                <Typography variant="caption" color="error">
+                  Stok tersisa: {item.stock}
+                </Typography>
+              )}
+            </>
+          }
+        />
+      </ListItem>
+    ))}
+  </List>
 
-          <List>
-            {cart.map((item) => (
-              <ListItem key={item.id}>
-                <ListItemText
-                  primary={item.title}
-                  secondary={`${convertToRupiah(item.price.toFixed(2))} × ${item.quantity}`}
-                />
-              </ListItem>
-            ))}
-          </List>
+  <Divider sx={{ my: 2 }} />
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+    <Typography variant='h6'>Total</Typography>
+    <Typography variant='h6'>{convertToRupiah(totalPrice.toFixed(2))}</Typography>
+  </Box>
 
-          <Divider sx={{ my: 2 }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-            <Typography variant='h6'>Total</Typography>
-            <Typography variant='h6'>{convertToRupiah(totalPrice.toFixed(2))}</Typography>
-          </Box>
+  <Button 
+    variant='contained' 
+    fullWidth 
+    onClick={handleCheckout}
+    disabled={cart.some(item => item.quantity > item.stock)}
+  >
+    Proses Pembayaran
+  </Button>
+</Drawer>
 
-          <Button variant='contained' fullWidth onClick={handleCheckout}>
-            Proses Pembayaran
-          </Button>
-        </Drawer>
-
-        {/* Thermal Receipt Style */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
           <Paper
             sx={{
@@ -307,7 +356,6 @@ const Checkout = () => {
           </Button>
         </Box>
 
-        {/* Dialog Konfirmasi */}
         <Dialog open={openConfirmDialog} onClose={handleCancelCheckout}>
           <DialogTitle>Konfirmasi Checkout</DialogTitle>
           <DialogContent>

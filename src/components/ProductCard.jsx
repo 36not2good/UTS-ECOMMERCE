@@ -21,8 +21,9 @@ const shortenProductName = (name) => {
 };
 
 const ProductCard = ({ product, isHome }) => {
-  const { addToCart } = useContext(CartContext);
+  const { cart, addToCart } = useContext(CartContext);
   const isOutOfStock = product.stock === 0;
+  const isInCart = cart.some(item => item.id === product.id);
 
   const handleAddToCart = () => {
     if (!isOutOfStock) {
@@ -50,7 +51,6 @@ const ProductCard = ({ product, isHome }) => {
         },
       }}
     >
-      {/* Gambar Produk */}
       <Box
         sx={{
           width: '100%',
@@ -63,7 +63,6 @@ const ProductCard = ({ product, isHome }) => {
         }}
       ></Box>
 
-      {/* Konten Card */}
       <Box
         sx={{
           p: 1.5,
@@ -72,7 +71,6 @@ const ProductCard = ({ product, isHome }) => {
           flexDirection: 'column',
         }}
       >
-        {/* Nama Produk Dipendekkan */}
         <Tooltip title={product.title} arrow>
           <Typography
             sx={{
@@ -89,7 +87,6 @@ const ProductCard = ({ product, isHome }) => {
           </Typography>
         </Tooltip>
 
-        {/* Harga dan Tombol */}
         {!isHome && (
           <Box>
             <Typography
@@ -97,6 +94,9 @@ const ProductCard = ({ product, isHome }) => {
             >
               {convertToRupiah(product.price)}
             </Typography>
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+              Stok: {product.stock}
+              </Typography>
             <Button
               variant='contained'
               color='primary'
@@ -105,12 +105,13 @@ const ProductCard = ({ product, isHome }) => {
                 fontSize: '14px',
                 marginTop: '12px',
                 width: '100%',
+                bgcolor: isInCart ? '#4caf50' : isOutOfStock ? 'grey.400' : '#1976d2'
               }}
               endIcon={<AddShoppingCartIcon />}
-              disabled={isOutOfStock}
+              disabled={isOutOfStock || isInCart}
               onClick={handleAddToCart}
             >
-              Tambah Keranjang
+              {isOutOfStock ? 'Stok Habis' : isInCart ? 'Sudah di Keranjang' : 'Tambah Keranjang'}
             </Button>
           </Box>
         )}

@@ -25,6 +25,9 @@ import axios from 'axios';
 import { CartContext } from '../context/CartContext';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 
@@ -39,7 +42,7 @@ const ProductList = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [badgeVisible, setBadgeVisible] = useState(true);
 
-  const { cart, totalPrice } = useContext(CartContext);
+  const { cart, totalPrice,updateQuantity,removeItem,decreaseQuantity } = useContext(CartContext);
   const navigate = useNavigate();
   const productsPerPage = 24;
 
@@ -47,14 +50,17 @@ const ProductList = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get('https://fakestoreapi.com/products');
-        setProducts(response.data);
+        const productsWithStock = response.data.map(product => ({
+          ...product,
+          stock: 5 
+        }));
+        setProducts(productsWithStock);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error:', error);
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
@@ -161,55 +167,100 @@ const ProductList = () => {
         open={drawerOpen}
         onClose={handleCloseDrawer}
         PaperProps={{
-          sx: {
-            width: 350,
-            p: 2,
-          },
-        }}
+        sx: {
+        width: 350,
+        p: 2,
+    },
+  }}
+>
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      mb: 2,
+    }}
+  >
+    <Typography variant='h6'>Keranjang Belanja</Typography>
+    <IconButton onClick={handleCloseDrawer}>
+      <CloseIcon />
+    </IconButton>
+  </Box>
+
+  <Divider sx={{ mb: 2 }} />
+
+  <List>
+    {cart.map((item) => (
+      <ListItem 
+        key={item.id}
+        secondaryAction={
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              onClick={() => decreaseQuantity(item.id)}
+              disabled={item.quantity <= 1}
+              size="small"
+            >
+              <RemoveIcon fontSize="small" />
+            </IconButton>
+
+            <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
+            <IconButton 
+              onClick={() => {
+                const productInCatalog = products.find(p => p.id === item.id);
+                if (productInCatalog && item.quantity < productInCatalog.stock) {
+                  updateQuantity(item.id, item.quantity + 1);
+                }
+              }}
+              disabled={item.quantity >= (products.find(p => p.id === item.id)?.stock || 0)}
+              size="small"
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+
+            <IconButton 
+              onClick={() => removeItem(item.id)}
+              size="small"
+              sx={{ ml: 1 }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        }
       >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 2,
-          }}
-        >
-          <Typography variant='h6'>Keranjang Belanja</Typography>
-          <IconButton onClick={handleCloseDrawer}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
+        <ListItemText
+                  primary={item.title}
+                  secondary={
+                    <>
+                      {`${convertToRupiah(item.price.toFixed(2))} × ${item.quantity} = ${convertToRupiah((item.price * item.quantity).toFixed(2))}`}
+                      <br />
+                      {item.quantity >= item.stock && (
+                        <Typography variant="caption" color="error">
+                          Stok tersisa: {item.stock}
+                        </Typography>
+                      )}
+                    </>
+                  }
+                />
+          </ListItem>
+    ))}
+  </List>
 
-        <Divider sx={{ mb: 2 }} />
+  <Divider sx={{ my: 2 }} />
 
-        <List>
-          {cart.map((item) => (
-            <ListItem key={item.id}>
-            <ListItemText
-                      primary={item.title}
-                      secondary={`${convertToRupiah(item.price.toFixed(2))} × ${item.quantity}`}
-                    />
-                  </ListItem>
-                ))}                    
-          </List>
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+    <Typography variant='h6'>Total</Typography>
+    <Typography variant='h6'>{convertToRupiah(totalPrice.toFixed(2))}</Typography>
+  </Box>
 
-        <Divider sx={{ my: 2 }} />
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant='h6'>Total</Typography>
-          <Typography variant='h6'>{convertToRupiah(totalPrice.toFixed(2))}</Typography>
-        </Box>
-
-        <Button
-          variant='contained'
-          color='primary'
-          fullWidth
-          onClick={handleCheckout}
-        >
-          Lihat Pembayaran
-        </Button>
-      </Drawer>
+  <Button
+    variant='contained'
+    color='primary'
+    fullWidth
+    onClick={handleCheckout}
+  >
+    Lihat Pembayaran
+  </Button>
+</Drawer>
       <Container maxWidth='lg' sx={{ py: 12 }}>
         {/* Filter controls */}
         <Box
