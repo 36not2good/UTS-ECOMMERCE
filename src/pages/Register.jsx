@@ -21,13 +21,10 @@ import * as Yup from 'yup';
 
 const Register = () => {
   const { login } = useContext(AuthContext);
-  const { cart } = useContext(CartContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState('');
-  const [activeStep] = useState(0);
 
-  // Cek jika redirect dari proses checkout
   const fromCheckout = location.state?.fromCheckout || false;
 
   const validationSchema = Yup.object().shape({
@@ -67,8 +64,6 @@ const Register = () => {
       setSubmitting(false);
     }
   };
-
-  const steps = ['Data Diri', 'Verifikasi', 'Selesai'];
 
   return (
     <Container
@@ -162,7 +157,7 @@ const Register = () => {
                     error={touched.phone && Boolean(errors.phone)}
                     helperText={<ErrorMessage name='phone' />}
                     InputProps={{
-                      startAdornment: <span style={{ marginRight: 8 }}>+</span>,
+                      startAdornment: <span style={{ marginRight: 0 }}>+</span>,
                     }}
                   />
                 </Grid>
